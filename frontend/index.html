@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FloodLens AI - Live Flood Impact & Safe-Access Intelligence</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            },
+            hazard: {
+              safe: '#10b981',
+              warning: '#f59e0b',
+              critical: '#ef4444',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden font-sans">
+
+  <!-- TOP HEADER & TELEMETRY BAR -->
+  <header class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0 z-30 shadow-lg">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">
+        <i class="fa-solid fa-water text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center">
+            FloodLens <span class="ml-1 text-blue-400 font-extrabold">AI</span>
+          </h1>
+          <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live System
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 hidden sm:block">India Safe-Access & Healthcare Continuity Intelligence</p>
+      </div>
+    </div>
+
+    <!-- LIVE TELEMETRY CHIPS -->
+    <div id="telemetry-bar" class="flex items-center flex-wrap gap-2 text-xs">
+      <!-- Weather Chip -->
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-md px-3 py-1 flex items-center gap-2">
+        <i class="fa-solid fa-cloud-showers-heavy text-blue-400"></i>
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-medium">Open-Meteo Rain (24h)</div>
+          <div id="telemetry-rain" class="font-bold text-white">Loading...</div>
+        </div>
+      </div>
+
+      <!-- GloFAS River Discharge Chip -->
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-md px-3 py-1 flex items-center gap-2">
+        <i class="fa-solid fa-gauge-high text-cyan-400"></i>
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-medium">GloFAS Discharge</div>
+          <div id="telemetry-discharge" class="font-bold text-white">Loading...</div>
+        </div>
+      </div>
+
+      <!-- CWC Gauge vs Danger Level -->
+      <div id="telemetry-gauge-card" class="bg-slate-800/80 border border-slate-700/60 rounded-md px-3 py-1 flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-amber-400" id="gauge-icon"></i>
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-medium">CWC River Gauge</div>
+          <div id="telemetry-gauge" class="font-bold text-amber-400">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISTRICT & SCENARIO CONTROLS -->
+    <div class="flex items-center space-x-2">
+      <!-- All-India Flood Zones Explorer Button -->
+      <button id="btn-all-india-modal" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 text-xs px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 font-medium shadow-sm">
+        <i class="fa-solid fa-earth-asia text-blue-400"></i>
+        <span class="hidden sm:inline">All India Flood Zones</span>
+        <span class="bg-blue-500/30 text-blue-200 text-[10px] font-bold px-1.5 py-0.2 rounded-full">24</span>
+      </button>
+
+      <!-- District Select -->
+      <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
+        <label for="district-select" class="text-xs text-slate-400 mr-2 font-medium">District:</label>
+        <select id="district-select" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer max-w-[200px] truncate">
+          <option value="" disabled selected>Loading India flood zones...</option>
+        </select>
+      </div>
+
+      <!-- Scenario Select -->
+      <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
+        <label for="scenario-select" class="text-xs text-slate-400 mr-2 font-medium">Scenario:</label>
+        <select id="scenario-select" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
+          <option value="live" class="bg-slate-900 text-white">🟢 Live Open-Meteo Data</option>
+          <option value="monsoon_surge" class="bg-slate-900 text-white">🟡 Heavy Monsoon Surge</option>
+          <option value="extreme_cloudburst" class="bg-slate-900 text-white">🔴 Extreme Flood & Inundation</option>
+        </select>
+      </div>
+
+      <button id="refresh-btn" title="Refresh Live Feeds" class="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg transition-colors flex items-center justify-center">
+        <i class="fa-solid fa-arrows-rotate text-xs"></i>
+      </button>
+
+      <!-- API Key Settings Button -->
+      <button id="btn-api-key-modal" title="Gemini API Key Configuration" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs">
+        <i class="fa-solid fa-key text-amber-400 text-xs"></i>
+        <span class="hidden md:inline font-medium">API Key</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- API KEY CONFIGURATION MODAL -->
+  <div id="api-key-modal" class="fixed inset-0 z-[2100] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center">
+            <i class="fa-solid fa-key text-sm"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Gemini API Key Settings</h3>
+            <p class="text-[11px] text-slate-400">Multimodal verification, NLP report extraction & response agent.</p>
+          </div>
+        </div>
+        <button id="btn-close-api-key-modal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Active Engine:</span>
+            <span id="api-key-active-engine" class="font-bold text-blue-300">Checking...</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Current Key:</span>
+            <span id="api-key-masked-val" class="font-mono text-slate-300">None</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Enter Google Gemini API Key</label>
+          <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-600 focus:outline-none focus:border-blue-500 text-xs">
+          <p class="text-[10px] text-slate-400 mt-1">
+            Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-400 underline hover:text-blue-300">Google AI Studio</a>. Keys are persisted in your local <code class="text-amber-300 font-mono">.env</code> file.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <button id="btn-save-api-key" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg transition text-xs flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-check"></i> Save & Apply Key
+          </button>
+          <button id="btn-clear-api-key" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-lg transition text-xs">
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALL INDIA REGIONS MODAL -->
+  <div id="all-india-modal" class="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-map-location-dot text-blue-400"></i> All-India Flood-Prone Regions Directory
+          </h2>
+          <p class="text-xs text-slate-400">24 monitored critical river basins, coastal deluge zones, and Himalayan flash flood sectors across India.</p>
+        </div>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Search & Zone Filters -->
+      <div class="p-3 border-b border-slate-800 bg-slate-950/60 flex flex-wrap gap-2 items-center justify-between">
+        <div class="relative flex-1 min-w-[240px]">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+          <input type="text" id="modal-region-search" placeholder="Search by district, state, river basin (e.g. Brahmaputra, Ganga, Kosi, Periyar)..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+        </div>
+        <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+          <span class="font-semibold text-slate-300">Quick Filters:</span>
+          <button class="filter-zone-btn px-2 py-1 rounded bg-blue-600/30 text-blue-300 border border-blue-500/40" data-filter="all">All</button>
+          <button class="filter-zone-btn px-2 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Assam">Assam</button>
+          <button class="filter-zone-btn px-2 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Bihar">Bihar</button>
+          <button class="filter-zone-btn px-2 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Kerala">Kerala</button>
+          <button class="filter-zone-btn px-2 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Odisha">Odisha</button>
+          <button class="filter-zone-btn px-2 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Himalayan">Himalayan</button>
+        </div>
+      </div>
+
+      <!-- Regions Grid -->
+      <div id="modal-regions-grid" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 custom-scrollbar text-xs">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN VIEWPORT: SPLIT LAYOUT (MAP + INTELLIGENCE PANE) -->
+  <main class="flex-1 flex flex-col md:flex-row relative overflow-hidden">
+
+    <!-- MAP CONTAINER -->
+    <section class="flex-1 relative h-[50vh] md:h-full bg-slate-900">
+      <div id="map" class="w-full h-full z-0"></div>
+
+      <!-- MAP FLOATING CONTROLS: LAYER TOGGLE -->
+      <div class="absolute top-3 left-3 z-[1000] bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl max-w-[260px]">
+        <div class="text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 flex items-center justify-between">
+          <span>Map Intelligence Layers</span>
+          <i class="fa-solid fa-layer-group text-blue-400"></i>
+        </div>
+        <div class="space-y-1.5 text-xs">
+          <label class="flex items-center space-x-2 cursor-pointer hover:text-white text-slate-300">
+            <input type="checkbox" id="layer-roads" checked class="rounded border-slate-700 text-blue-600 focus:ring-0">
+            <span class="flex items-center gap-1.5">
+              <span class="w-3 h-1 rounded bg-gradient-to-r from-emerald-400 via-amber-400 to-red-500"></span> Road Network (ML Passability)
+            </span>
+          </label>
+          <label class="flex items-center space-x-2 cursor-pointer hover:text-white text-slate-300">
+            <input type="checkbox" id="layer-hospitals" checked class="rounded border-slate-700 text-blue-600 focus:ring-0">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-hospital text-blue-400 text-[11px]"></i> Health Facilities & Clinics
+            </span>
+          </label>
+          <label class="flex items-center space-x-2 cursor-pointer hover:text-white text-slate-300">
+            <input type="checkbox" id="layer-communities" checked class="rounded border-slate-700 text-blue-600 focus:ring-0">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-users text-amber-400 text-[11px]"></i> Habitations & Isolated Zones
+            </span>
+          </label>
+          <label class="flex items-center space-x-2 cursor-pointer hover:text-white text-slate-300">
+            <input type="checkbox" id="layer-reports" checked class="rounded border-slate-700 text-blue-600 focus:ring-0">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-camera text-purple-400 text-[11px]"></i> Verified Citizen Reports
+            </span>
+          </label>
+        </div>
+        <div class="pt-2 mt-2 border-t border-slate-800 space-y-2">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-400 font-medium">Basemap:</span>
+            <select id="basemap-select" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2 py-0.5 text-[10px] focus:outline-none cursor-pointer">
+              <option value="dark">Dark Tactical (ESRI)</option>
+              <option value="satellite">Satellite Imagery (ESRI)</option>
+              <option value="topo">Topographic (ESRI)</option>
+            </select>
+          </div>
+          <button id="btn-india-overview" class="w-full bg-blue-950/60 hover:bg-blue-900/80 text-blue-300 py-1.5 px-2 rounded-lg text-[11px] font-semibold border border-blue-500/40 transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-map-location-dot text-blue-400"></i> All India Flood Overview
+          </button>
+        </div>
+      </div>
+
+      <!-- MAP LEGEND -->
+      <div class="absolute bottom-4 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-2 shadow-xl text-[11px] text-slate-300 flex items-center gap-4">
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Passable</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cautionary (Waterlogged)</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span> Submerged / Impassable</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Alternative Safe Route</div>
+      </div>
+
+      <!-- SAFETY DISCLAIMER BANNER -->
+      <div class="absolute top-3 right-3 z-[1000] hidden lg:block bg-amber-950/80 border border-amber-500/40 text-amber-200 px-3 py-1.5 rounded-lg text-[11px] max-w-sm backdrop-blur-sm shadow-lg">
+        <i class="fa-solid fa-shield-halved mr-1 text-amber-400"></i>
+        Predictions are advisory. Never attempt travel through standing floodwater. Follow local police/NDRF instructions.
+      </div>
+    </section>
+
+    <!-- RIGHT INTELLIGENCE SIDEBAR -->
+    <aside class="w-full md:w-[480px] lg:w-[540px] bg-slate-900 border-l border-slate-800 flex flex-col h-[50vh] md:h-full z-10 shrink-0 shadow-2xl">
+      
+      <!-- NAVIGATION TABS -->
+      <nav class="flex border-b border-slate-800 bg-slate-900/80 shrink-0 text-xs font-semibold">
+        <button data-tab="tab-dashboard" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-blue-500 text-blue-400 flex items-center justify-center gap-1.5 transition-colors">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Authority Hub</span>
+        </button>
+        <button data-tab="tab-assistant" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
+          <i class="fa-solid fa-robot"></i>
+          <span>Citizen Bot</span>
+        </button>
+        <button data-tab="tab-report" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span>Report Intake</span>
+        </button>
+        <button data-tab="tab-diagnostics" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
+          <i class="fa-solid fa-microchip"></i>
+          <span>ML Diagnostics</span>
+        </button>
+      </nav>
+
+      <!-- TAB CONTENTS CONTAINER -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 text-slate-200 custom-scrollbar">
+
+        <!-- TAB 1: AUTHORITY DASHBOARD -->
+        <div id="tab-dashboard" class="tab-content space-y-4">
+          <!-- EMERGENCY STATUS BANNER -->
+          <div id="active-alert-container" class="space-y-2">
+            <!-- Dynamic alerts injected here -->
+          </div>
+
+          <!-- KEY KPI CARDS -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="bg-slate-800/80 border border-slate-700/60 p-2.5 rounded-lg text-center">
+              <div class="text-[10px] uppercase text-slate-400 font-semibold">Cut-Off Zones</div>
+              <div id="kpi-isolated-count" class="text-xl font-extrabold text-red-400">0</div>
+              <div class="text-[10px] text-slate-500">Communities</div>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/60 p-2.5 rounded-lg text-center">
+              <div class="text-[10px] uppercase text-slate-400 font-semibold">Population at Risk</div>
+              <div id="kpi-population-cutoff" class="text-xl font-extrabold text-amber-400">0</div>
+              <div class="text-[10px] text-slate-500">Citizens</div>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/60 p-2.5 rounded-lg text-center">
+              <div class="text-[10px] uppercase text-slate-400 font-semibold">Impassable Roads</div>
+              <div id="kpi-failed-roads" class="text-xl font-extrabold text-red-400">0</div>
+              <div class="text-[10px] text-slate-500">Segments</div>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/60 p-2.5 rounded-lg text-center">
+              <div class="text-[10px] uppercase text-slate-400 font-semibold">Hospital Access</div>
+              <div id="kpi-hospital-status" class="text-xl font-extrabold text-emerald-400">100%</div>
+              <div class="text-[10px] text-slate-500">Reachability</div>
+            </div>
+          </div>
+
+          <!-- RESPONSE AGENT DISPATCH PLANNER -->
+          <div class="bg-slate-800/90 border border-blue-500/30 rounded-xl p-3.5 shadow-lg">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white">FloodLens Response Agent (ADK Decision Support)</h3>
+              </div>
+              <button id="btn-generate-plan" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-2.5 py-1 rounded-md transition-colors flex items-center gap-1">
+                <i class="fa-solid fa-bolt"></i> Generate Plan
+              </button>
+            </div>
+            
+            <p id="plan-evidence-summary" class="text-xs text-slate-300 italic mb-3 leading-relaxed">
+              Click 'Generate Plan' to synthesize road failure probabilities, isolation graphs, and population density into prioritized dispatch recommendations.
+            </p>
+
+            <!-- APPROVAL STATUS BOX -->
+            <div id="approval-box" class="bg-slate-900/90 border border-slate-700 rounded-lg p-2.5 mb-3 flex items-center justify-between">
+              <div>
+                <div class="text-[10px] uppercase text-slate-400 font-bold">Official Human Approval State</div>
+                <div id="approval-status-badge" class="text-xs font-bold text-amber-400">PENDING OFFICIAL REVIEW</div>
+              </div>
+              <button id="btn-approve-dispatch" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-md font-semibold transition-colors flex items-center gap-1.5 disabled:opacity-50">
+                <i class="fa-solid fa-signature"></i> Sign & Approve Dispatch
+              </button>
+            </div>
+
+            <!-- RANKED PRIORITIES LIST -->
+            <div id="dispatch-priorities-list" class="space-y-2 text-xs">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- ISOLATED & COMPROMISED COMMUNITIES LIST -->
+          <div class="bg-slate-800/70 border border-slate-700/60 rounded-xl p-3.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center justify-between">
+              <span>Healthcare Isolation Status</span>
+              <span class="text-[10px] text-slate-400 font-normal">NetworkX Graph Analysis</span>
+            </h3>
+            <div id="communities-status-list" class="space-y-2 text-xs">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: CITIZEN SAFE-ACCESS ASSISTANT -->
+        <div id="tab-assistant" class="tab-content hidden flex flex-col h-full space-y-3">
+          <div class="bg-blue-950/40 border border-blue-500/30 p-3 rounded-lg text-xs text-blue-200 flex items-start gap-2">
+            <i class="fa-solid fa-circle-info text-blue-400 mt-0.5"></i>
+            <div>
+              <span class="font-bold">Citizen Safe-Access Navigator:</span> Query real-time route passability to emergency medical centers. Powered by tool-calling road failure models.
+            </div>
+          </div>
+
+          <!-- QUICK SUGGESTION PROMPTS -->
+          <div class="flex flex-wrap gap-1.5 text-xs">
+            <button class="quick-prompt bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full text-[11px] transition">
+              Can I reach PMCH from Rajendra Nagar?
+            </button>
+            <button class="quick-prompt bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full text-[11px] transition">
+              Is AIIMS accessible from Danapur Diara?
+            </button>
+            <button class="quick-prompt bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full text-[11px] transition">
+              Which hospitals have ICU & power backup?
+            </button>
+          </div>
+
+          <!-- CHAT LOG CONTAINER -->
+          <div id="chat-messages" class="flex-1 bg-slate-950/70 border border-slate-800 rounded-xl p-3 overflow-y-auto space-y-3 min-h-[300px] max-h-[420px] custom-scrollbar text-xs">
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center shrink-0 text-white font-bold text-xs">FL</div>
+              <div class="bg-slate-800 rounded-lg p-2.5 max-w-[85%] text-slate-200">
+                <p>Hello! I am your <strong>FloodLens Safe-Access Assistant</strong>.</p>
+                <p class="mt-1">Tell me your neighborhood, and I will check road flood depth, graph connectivity, and suggest safe healthcare routes.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHAT INPUT -->
+          <form id="chat-form" class="flex gap-2">
+            <input type="text" id="chat-input" placeholder="Ask: 'Can I reach the hospital from...?'" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
+              <span>Send</span>
+              <i class="fa-solid fa-paper-plane text-[10px]"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- TAB 3: COMMUNITY REPORT INTAKE -->
+        <div id="tab-report" class="tab-content hidden space-y-4">
+          <div class="bg-slate-800/80 border border-slate-700/60 p-3.5 rounded-xl">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white mb-1 flex items-center gap-2">
+              <i class="fa-solid fa-camera text-purple-400"></i> Submit Ground Flood Report
+            </h3>
+            <p class="text-[11px] text-slate-400 mb-3">
+              Multilingual report intake (Hindi, Assamese, English). Reports are verified for water depth and plausibility using Gemini Vision / NLP.
+            </p>
+
+            <form id="report-form" class="space-y-3 text-xs">
+              <div>
+                <label class="block text-slate-400 mb-1 font-medium">Your Name / Organization</label>
+                <input type="text" id="report-author" required placeholder="e.g. Ramesh Kumar (Resident) or SDRF Volunteer" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-slate-400 mb-1 font-medium">Observation / Hazard Details (Any Language)</label>
+                <textarea id="report-text" rows="3" required placeholder="e.g. कमर तक पानी भर गया है, गाड़ियां डूब चुकी हैं... or Water level 4 feet, road blocked." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-slate-400 mb-1 font-medium">
+                  <span>Estimated Water Depth</span>
+                  <span id="depth-val-display" class="text-blue-400 font-bold">45 cm</span>
+                </div>
+                <input type="range" id="report-depth" min="5" max="200" value="45" class="w-full accent-blue-500 cursor-pointer">
+              </div>
+
+              <div>
+                <label class="block text-slate-400 mb-1 font-medium">Photo Proof URL (Optional)</label>
+                <input type="url" id="report-photo" placeholder="https://example.com/flood-water.jpg" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+              </div>
+
+              <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+                <i class="fa-solid fa-microchip"></i>
+                <span>Submit & Verify with Gemini</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- VERIFIED REPORTS FEED -->
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Live Crowdsourced Reports</h4>
+            <div id="reports-feed" class="space-y-2 text-xs">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: ML DIAGNOSTICS & BASELINE COMPARISON -->
+        <div id="tab-diagnostics" class="tab-content hidden space-y-4">
+          <div class="bg-slate-800/80 border border-slate-700/60 p-3.5 rounded-xl">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-scale-balanced text-emerald-400"></i> Gradient Boosting vs Naive Baseline
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed mb-3">
+              The naive baseline relies solely on rain thresholds (e.g. >75mm rain = impassable). FloodLens combines <strong>terrain elevation (DEM), GloFAS river discharge backflow, and road structural class</strong> to eliminate false negatives in low-lying sumps and false alarms on elevated expressways.
+            </p>
+
+            <div class="border border-slate-700 rounded-lg overflow-hidden text-xs">
+              <table class="w-full text-left">
+                <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
+                  <tr>
+                    <th class="p-2">Road Segment</th>
+                    <th class="p-2">Baseline</th>
+                    <th class="p-2">FloodLens ML</th>
+                    <th class="p-2">Uncertainty</th>
+                  </tr>
+                </thead>
+                <tbody id="diagnostics-table-body" class="divide-y divide-slate-800 font-mono text-[11px]">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-lg text-xs text-slate-400">
+            <div class="font-bold text-slate-300 mb-1">Architecture Reference:</div>
+            <p>Runs on live Open-Meteo REST API, GloFAS River Hydro-models, and NetworkX topological road graphs. Prepared for Google Cloud Run deployment with Vertex AI & Gemini multimodal reasoning.</p>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- SCRIPTS -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+  <script src="/static/js/assistant.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

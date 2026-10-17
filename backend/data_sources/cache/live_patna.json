@@ -1,0 +1,64 @@
+{
+  "district": "patna",
+  "district_name": "Patna District, Bihar",
+  "river_basin": "Ganga, Son & Punpun Basins",
+  "source": "Open-Meteo Weather + GloFAS Flood API",
+  "timestamp": "2026-10-17 13:08:27 UTC",
+  "status": "online",
+  "weather": {
+    "temperature_c": 27.2,
+    "humidity_percent": 75,
+    "precipitation_current_mm": 0.0,
+    "rain_next_24h_mm": 0.0,
+    "wind_speed_kmh": 8.9,
+    "weather_code": 1,
+    "hourly_rain": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "river_discharge": {
+    "current_discharge_m3s": 2.7,
+    "baseline_mean_m3s": 2.7,
+    "discharge_ratio": 0.99,
+    "forecast_5d": [
+      2.71,
+      2.52,
+      2.33,
+      2.16,
+      2.0
+    ]
+  },
+  "gauge": {
+    "station": "Gandhi Ghat, Patna",
+    "current_gauge_m": 46.19,
+    "warning_level_m": 47.6,
+    "danger_level_m": 48.6,
+    "above_warning": false,
+    "above_danger": false,
+    "freeboard_m": 2.41
+  },
+  "_cached_at": 1792242510.721656
+}
