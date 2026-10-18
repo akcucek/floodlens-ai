@@ -45,17 +45,17 @@ class DashboardManager {
       gaugeEl.innerHTML = `${cur}m <span class="text-[10px] text-slate-400">/ ${danger}m</span>`;
 
       if (gauge.above_danger) {
-        gaugeEl.className = 'font-bold text-red-400 animate-pulse';
+        gaugeEl.className = 'font-bold text-red-400 animate-pulse text-[11px]';
         if (gaugeIcon) gaugeIcon.className = 'fa-solid fa-triangle-exclamation text-red-500 animate-bounce';
-        if (gaugeCard) gaugeCard.className = 'bg-red-950/40 border border-red-500/60 rounded-md px-3 py-1 flex items-center gap-2';
+        if (gaugeCard) gaugeCard.className = 'bg-red-950/40 border border-red-500/60 rounded-md px-2.5 py-1 flex items-center gap-2 shrink-0';
       } else if (gauge.above_warning) {
-        gaugeEl.className = 'font-bold text-amber-400';
+        gaugeEl.className = 'font-bold text-amber-400 text-[11px]';
         if (gaugeIcon) gaugeIcon.className = 'fa-solid fa-triangle-exclamation text-amber-400';
-        if (gaugeCard) gaugeCard.className = 'bg-amber-950/40 border border-amber-500/60 rounded-md px-3 py-1 flex items-center gap-2';
+        if (gaugeCard) gaugeCard.className = 'bg-amber-950/40 border border-amber-500/60 rounded-md px-2.5 py-1 flex items-center gap-2 shrink-0';
       } else {
-        gaugeEl.className = 'font-bold text-emerald-400';
+        gaugeEl.className = 'font-bold text-emerald-400 text-[11px]';
         if (gaugeIcon) gaugeIcon.className = 'fa-solid fa-shield-check text-emerald-400';
-        if (gaugeCard) gaugeCard.className = 'bg-slate-800/80 border border-slate-700/60 rounded-md px-3 py-1 flex items-center gap-2';
+        if (gaugeCard) gaugeCard.className = 'bg-slate-800/80 border border-slate-700/60 rounded-md px-2.5 py-1 flex items-center gap-2 shrink-0';
       }
     }
   }

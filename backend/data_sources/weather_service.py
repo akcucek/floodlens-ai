@@ -123,21 +123,42 @@ class WeatherService:
                 daily = f_json.get("daily", {})
                 discharges = daily.get("river_discharge", [])
                 discharge_mean = daily.get("river_discharge_mean", [])
-                current_discharge = discharges[0] if discharges and discharges[0] is not None else 1250.0
-                mean_baseline = discharge_mean[0] if discharge_mean and discharge_mean[0] is not None else 950.0
+                
+                # Check for valid numerical values from GloFAS
+                valid_d = [d for d in discharges if d is not None]
+                valid_m = [m for m in discharge_mean if m is not None]
 
+                if valid_d and valid_m and valid_m[0] > 0:
+                    current_discharge = valid_d[0]
+                    mean_baseline = valid_m[0]
+                    result["river_discharge"] = {
+                        "current_discharge_m3s": round(current_discharge, 1),
+                        "baseline_mean_m3s": round(mean_baseline, 1),
+                        "discharge_ratio": round(current_discharge / mean_baseline, 2),
+                        "forecast_5d": discharges[:5]
+                    }
+                else:
+                    # GloFAS coordinate has no direct river grid; baseline normal flow
+                    result["river_discharge"] = {
+                        "current_discharge_m3s": 350.0,
+                        "baseline_mean_m3s": 350.0,
+                        "discharge_ratio": 1.00,
+                        "forecast_5d": [350.0, 350.0, 350.0, 350.0, 350.0]
+                    }
+            else:
                 result["river_discharge"] = {
-                    "current_discharge_m3s": round(current_discharge, 1),
-                    "baseline_mean_m3s": round(mean_baseline, 1),
-                    "discharge_ratio": round(current_discharge / max(mean_baseline, 1.0), 2),
-                    "forecast_5d": discharges[:5]
+                    "current_discharge_m3s": 350.0,
+                    "baseline_mean_m3s": 350.0,
+                    "discharge_ratio": 1.00,
+                    "forecast_5d": [350.0, 350.0, 350.0, 350.0, 350.0],
+                    "fallback": True
                 }
         except Exception:
             result["river_discharge"] = {
-                "current_discharge_m3s": 1450.0,
-                "baseline_mean_m3s": 1050.0,
-                "discharge_ratio": 1.38,
-                "forecast_5d": [1450.0, 1520.0, 1610.0, 1490.0, 1380.0],
+                "current_discharge_m3s": 350.0,
+                "baseline_mean_m3s": 350.0,
+                "discharge_ratio": 1.00,
+                "forecast_5d": [350.0, 350.0, 350.0, 350.0, 350.0],
                 "fallback": True
             }
 

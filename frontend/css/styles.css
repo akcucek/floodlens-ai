@@ -74,3 +74,73 @@
   color: #6ee7b7;
   border: 1px solid rgba(16, 185, 129, 0.4);
 }
+
+/* Hide scrollbar for clean horizontal mobile carousels */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Touch responsiveness & mobile polish */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, select, input, textarea {
+  touch-action: manipulation;
+}
+
+/* Mobile viewport and safe-area adjustments */
+.safe-bottom {
+  padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
+}
+
+/* Smooth toggle for Map Layers Box */
+#map-layers-box {
+  transition: opacity 0.18s ease-in-out, transform 0.18s ease-in-out;
+}
+#map-layers-box.closed-box {
+  display: none !important;
+}
+
+/* Ensure map fills entire mobile container without collapsing */
+#map-section, #map {
+  min-height: 200px;
+  height: 100%;
+  width: 100%;
+}
+
+/* Mobile responsive drawer animations */
+#mobile-controls-drawer {
+  transition: max-height 0.25s ease-in-out, opacity 0.2s ease-in-out;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Floating Hub Action Button */
+#btn-floating-view-hub {
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5), 0 8px 10px -6px rgba(37, 99, 235, 0.4);
+}
+
+/* Fixed, permanent bottom mobile navigation bar */
+#mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  z-index: 1200;
+}
+
+@media (max-width: 767px) {
+  #map-section, #sidebar-section {
+    padding-bottom: 54px;
+  }
+}
+
+

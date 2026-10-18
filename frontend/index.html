@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>FloodLens AI - Live Flood Impact & Safe-Access Intelligence</title>
   
   <!-- Tailwind CSS CDN -->
@@ -39,95 +39,124 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Custom styles -->
-  <link rel="stylesheet" href="/static/css/styles.css">
+  <link rel="stylesheet" href="/static/css/styles.css?v=2.4">
 </head>
-<body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden font-sans">
+<body class="bg-slate-950 text-slate-100 flex flex-col h-screen h-[100dvh] overflow-hidden font-sans">
 
   <!-- TOP HEADER & TELEMETRY BAR -->
-  <header class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0 z-30 shadow-lg">
-    <div class="flex items-center space-x-3">
-      <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">
-        <i class="fa-solid fa-water text-lg"></i>
-      </div>
-      <div>
-        <div class="flex items-center space-x-2">
-          <h1 class="text-lg font-bold tracking-tight text-white flex items-center">
-            FloodLens <span class="ml-1 text-blue-400 font-extrabold">AI</span>
-          </h1>
-          <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live System
-          </span>
+  <header class="bg-slate-900 border-b border-slate-800 px-3 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2 shrink-0 z-30 shadow-lg">
+    <!-- Top Row: Compact Mobile App Bar & Desktop Brand -->
+    <div class="flex items-center justify-between w-full md:w-auto gap-2">
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20 shrink-0">
+          <i class="fa-solid fa-water text-base"></i>
         </div>
-        <p class="text-xs text-slate-400 hidden sm:block">India Safe-Access & Healthcare Continuity Intelligence</p>
+        <div>
+          <div class="flex items-center space-x-1.5">
+            <h1 class="text-sm sm:text-base md:text-lg font-bold tracking-tight text-white flex items-center">
+              FloodLens <span class="ml-1 text-blue-400 font-extrabold">AI</span>
+            </h1>
+            <span class="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live
+            </span>
+          </div>
+          <p class="text-[10px] text-slate-400 hidden xl:block">India Safe-Access & Healthcare Continuity Intelligence</p>
+        </div>
+      </div>
+
+      <!-- Mobile Fast Action Strip (Only on mobile) -->
+      <div class="flex items-center space-x-1.5 md:hidden">
+        <!-- Quick District Button (opens all-India directory) -->
+        <button id="btn-mobile-district-picker" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 max-w-[110px] truncate shadow-sm">
+          <i class="fa-solid fa-location-dot text-blue-400 text-[10px]"></i>
+          <span id="mobile-district-name" class="truncate">Patna</span>
+          <i class="fa-solid fa-chevron-down text-[8px] text-slate-400"></i>
+        </button>
+
+        <!-- Fast View Toggle: Map vs Hub -->
+        <div class="flex items-center bg-slate-950/90 rounded-lg p-0.5 border border-slate-700 shadow-inner">
+          <button id="hdr-btn-map" class="px-2 py-1 text-[11px] font-bold rounded-md bg-blue-600 text-white flex items-center gap-1 transition-colors active:scale-95">
+            <i class="fa-solid fa-map text-[10px]"></i> <span>Map</span>
+          </button>
+          <button id="hdr-btn-hub" class="px-2 py-1 text-[11px] font-bold rounded-md text-slate-400 hover:text-white flex items-center gap-1 transition-colors active:scale-95">
+            <i class="fa-solid fa-chart-line text-[10px]"></i> <span>Hub</span>
+          </button>
+        </div>
+
+        <!-- Toggle Telemetry/Filters Drawer -->
+        <button id="btn-toggle-telemetry" title="Toggle Live Weather Stats" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 p-1.5 rounded-lg text-xs w-7 h-7 flex items-center justify-center">
+          <i class="fa-solid fa-chart-simple text-cyan-400 text-xs"></i>
+        </button>
       </div>
     </div>
 
-    <!-- LIVE TELEMETRY CHIPS -->
-    <div id="telemetry-bar" class="flex items-center flex-wrap gap-2 text-xs">
-      <!-- Weather Chip -->
-      <div class="bg-slate-800/80 border border-slate-700/60 rounded-md px-3 py-1 flex items-center gap-2">
-        <i class="fa-solid fa-cloud-showers-heavy text-blue-400"></i>
-        <div>
-          <div class="text-[10px] text-slate-400 uppercase font-medium">Open-Meteo Rain (24h)</div>
-          <div id="telemetry-rain" class="font-bold text-white">Loading...</div>
+    <!-- Controls & Telemetry Row (Collapsible on mobile via the stats icon, always visible on desktop) -->
+    <div id="mobile-controls-drawer" class="hidden md:flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto">
+      <!-- Selects -->
+      <div class="flex items-center gap-1.5 w-full md:w-auto">
+        <!-- District Select -->
+        <div class="flex-1 md:flex-initial flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2 py-1">
+          <label for="district-select" class="text-[11px] text-slate-400 mr-1.5 font-medium shrink-0">District:</label>
+          <select id="district-select" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer w-full md:max-w-[200px] truncate">
+            <option value="" disabled selected>Loading India flood zones...</option>
+          </select>
+        </div>
+
+        <!-- Scenario Select -->
+        <div class="flex-1 md:flex-initial flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2 py-1">
+          <label for="scenario-select" class="text-[11px] text-slate-400 mr-1.5 font-medium shrink-0 hidden sm:inline">Scenario:</label>
+          <select id="scenario-select" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer w-full md:max-w-[160px]">
+            <option value="live" class="bg-slate-900 text-white">🟢 Live Open-Meteo</option>
+            <option value="monsoon_surge" class="bg-slate-900 text-white">🟡 Heavy Surge</option>
+            <option value="extreme_cloudburst" class="bg-slate-900 text-white">🔴 Extreme Flood</option>
+          </select>
+        </div>
+
+        <!-- Desktop Action Buttons -->
+        <div class="hidden md:flex items-center space-x-1.5 shrink-0">
+          <button id="btn-all-india-modal" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 text-xs px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 font-medium shadow-sm">
+            <i class="fa-solid fa-earth-asia text-blue-400"></i>
+            <span class="hidden lg:inline">All India Flood Zones</span>
+            <span class="bg-blue-500/30 text-blue-200 text-[10px] font-bold px-1.5 py-0.2 rounded-full">24</span>
+          </button>
+
+          <button id="refresh-btn" title="Refresh Live Feeds" class="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg transition-colors flex items-center justify-center">
+            <i class="fa-solid fa-arrows-rotate text-xs"></i>
+          </button>
+
+          <button id="btn-api-key-modal" title="Gemini API Key" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs">
+            <i class="fa-solid fa-key text-amber-400 text-xs"></i>
+            <span class="hidden lg:inline font-medium">API Key</span>
+          </button>
         </div>
       </div>
 
-      <!-- GloFAS River Discharge Chip -->
-      <div class="bg-slate-800/80 border border-slate-700/60 rounded-md px-3 py-1 flex items-center gap-2">
-        <i class="fa-solid fa-gauge-high text-cyan-400"></i>
-        <div>
-          <div class="text-[10px] text-slate-400 uppercase font-medium">GloFAS Discharge</div>
-          <div id="telemetry-discharge" class="font-bold text-white">Loading...</div>
+      <!-- LIVE TELEMETRY CHIPS -->
+      <div id="telemetry-bar" class="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none py-0.5 text-xs w-full md:w-auto shrink-0">
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md px-2.5 py-1 flex items-center gap-2 shrink-0">
+          <i class="fa-solid fa-cloud-showers-heavy text-blue-400"></i>
+          <div>
+            <div class="text-[9px] text-slate-400 uppercase font-medium">Rain (24h)</div>
+            <div id="telemetry-rain" class="font-bold text-white text-[11px]">Loading...</div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md px-2.5 py-1 flex items-center gap-2 shrink-0">
+          <i class="fa-solid fa-gauge-high text-cyan-400"></i>
+          <div>
+            <div class="text-[9px] text-slate-400 uppercase font-medium">GloFAS River</div>
+            <div id="telemetry-discharge" class="font-bold text-white text-[11px]">Loading...</div>
+          </div>
+        </div>
+
+        <div id="telemetry-gauge-card" class="bg-slate-800/80 border border-slate-700/60 rounded-md px-2.5 py-1 flex items-center gap-2 shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-amber-400" id="gauge-icon"></i>
+          <div>
+            <div class="text-[9px] text-slate-400 uppercase font-medium">CWC Gauge</div>
+            <div id="telemetry-gauge" class="font-bold text-amber-400 text-[11px]">Loading...</div>
+          </div>
         </div>
       </div>
-
-      <!-- CWC Gauge vs Danger Level -->
-      <div id="telemetry-gauge-card" class="bg-slate-800/80 border border-slate-700/60 rounded-md px-3 py-1 flex items-center gap-2">
-        <i class="fa-solid fa-triangle-exclamation text-amber-400" id="gauge-icon"></i>
-        <div>
-          <div class="text-[10px] text-slate-400 uppercase font-medium">CWC River Gauge</div>
-          <div id="telemetry-gauge" class="font-bold text-amber-400">Loading...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- DISTRICT & SCENARIO CONTROLS -->
-    <div class="flex items-center space-x-2">
-      <!-- All-India Flood Zones Explorer Button -->
-      <button id="btn-all-india-modal" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 text-xs px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 font-medium shadow-sm">
-        <i class="fa-solid fa-earth-asia text-blue-400"></i>
-        <span class="hidden sm:inline">All India Flood Zones</span>
-        <span class="bg-blue-500/30 text-blue-200 text-[10px] font-bold px-1.5 py-0.2 rounded-full">24</span>
-      </button>
-
-      <!-- District Select -->
-      <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
-        <label for="district-select" class="text-xs text-slate-400 mr-2 font-medium">District:</label>
-        <select id="district-select" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer max-w-[200px] truncate">
-          <option value="" disabled selected>Loading India flood zones...</option>
-        </select>
-      </div>
-
-      <!-- Scenario Select -->
-      <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
-        <label for="scenario-select" class="text-xs text-slate-400 mr-2 font-medium">Scenario:</label>
-        <select id="scenario-select" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
-          <option value="live" class="bg-slate-900 text-white">🟢 Live Open-Meteo Data</option>
-          <option value="monsoon_surge" class="bg-slate-900 text-white">🟡 Heavy Monsoon Surge</option>
-          <option value="extreme_cloudburst" class="bg-slate-900 text-white">🔴 Extreme Flood & Inundation</option>
-        </select>
-      </div>
-
-      <button id="refresh-btn" title="Refresh Live Feeds" class="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg transition-colors flex items-center justify-center">
-        <i class="fa-solid fa-arrows-rotate text-xs"></i>
-      </button>
-
-      <!-- API Key Settings Button -->
-      <button id="btn-api-key-modal" title="Gemini API Key Configuration" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs">
-        <i class="fa-solid fa-key text-amber-400 text-xs"></i>
-        <span class="hidden md:inline font-medium">API Key</span>
-      </button>
     </div>
   </header>
 
@@ -225,14 +254,25 @@
   <main class="flex-1 flex flex-col md:flex-row relative overflow-hidden">
 
     <!-- MAP CONTAINER -->
-    <section class="flex-1 relative h-[50vh] md:h-full bg-slate-900">
-      <div id="map" class="w-full h-full z-0"></div>
+    <section id="map-section" class="flex-1 relative h-full w-full bg-slate-900 flex flex-col">
+      <div id="map" class="w-full h-full z-0 flex-1"></div>
 
-      <!-- MAP FLOATING CONTROLS: LAYER TOGGLE -->
-      <div class="absolute top-3 left-3 z-[1000] bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl max-w-[260px]">
+      <!-- FLOATING LAYERS OPEN BUTTON (Visible whenever layer panel is closed) -->
+      <button id="btn-open-map-layers" title="Open Map Layers" class="hidden absolute top-3 left-3 z-[1000] bg-slate-900/95 hover:bg-slate-800 backdrop-blur-md border border-slate-700/80 hover:border-blue-500/60 text-blue-300 hover:text-white px-3 py-1.5 rounded-xl shadow-2xl items-center gap-2 text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer">
+        <i class="fa-solid fa-layer-group text-blue-400"></i>
+        <span>Map Layers</span>
+      </button>
+
+      <!-- MAP FLOATING CONTROLS: LAYER TOGGLE BOX (Default open on desktop, hidden on mobile) -->
+      <div id="map-layers-box" class="hidden md:block absolute top-3 left-3 z-[1000] bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl w-[265px] max-w-[calc(100vw-24px)] transition-all">
         <div class="text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 flex items-center justify-between">
-          <span>Map Intelligence Layers</span>
-          <i class="fa-solid fa-layer-group text-blue-400"></i>
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-layer-group text-blue-400"></i>
+            <span>Map Layers</span>
+          </div>
+          <button id="btn-close-map-layers" title="Close Layers Panel" class="text-slate-400 hover:text-white hover:bg-slate-800 w-6 h-6 rounded-md flex items-center justify-center transition-colors">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
         </div>
         <div class="space-y-1.5 text-xs">
           <label class="flex items-center space-x-2 cursor-pointer hover:text-white text-slate-300">
@@ -276,12 +316,18 @@
       </div>
 
       <!-- MAP LEGEND -->
-      <div class="absolute bottom-4 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-2 shadow-xl text-[11px] text-slate-300 flex items-center gap-4">
-        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Passable</div>
-        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cautionary (Waterlogged)</div>
-        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span> Submerged / Impassable</div>
-        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Alternative Safe Route</div>
+      <div id="map-legend" class="absolute bottom-16 sm:bottom-3 left-3 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-lg px-2.5 py-1.5 shadow-xl text-[10px] sm:text-[11px] text-slate-300 flex flex-wrap items-center gap-2 sm:gap-3 max-w-[calc(100vw-180px)] sm:max-w-none">
+        <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Passable</div>
+        <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cautionary</div>
+        <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span> Submerged</div>
+        <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Safe Route</div>
       </div>
+
+      <!-- FLOATING QUICK SWITCH: AUTHORITY HUB (Always visible, works on mobile & zoomed desktop-site) -->
+      <button id="btn-floating-view-hub" title="Open Authority Hub" class="absolute bottom-16 sm:bottom-3 right-3 z-[1100] bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-1.5 text-xs border border-blue-400/50 backdrop-blur-md active:scale-95 transition-all cursor-pointer">
+        <i class="fa-solid fa-chart-line text-xs"></i>
+        <span>Authority Hub ➔</span>
+      </button>
 
       <!-- SAFETY DISCLAIMER BANNER -->
       <div class="absolute top-3 right-3 z-[1000] hidden lg:block bg-amber-950/80 border border-amber-500/40 text-amber-200 px-3 py-1.5 rounded-lg text-[11px] max-w-sm backdrop-blur-sm shadow-lg">
@@ -291,23 +337,32 @@
     </section>
 
     <!-- RIGHT INTELLIGENCE SIDEBAR -->
-    <aside class="w-full md:w-[480px] lg:w-[540px] bg-slate-900 border-l border-slate-800 flex flex-col h-[50vh] md:h-full z-10 shrink-0 shadow-2xl">
-      
-      <!-- NAVIGATION TABS -->
-      <nav class="flex border-b border-slate-800 bg-slate-900/80 shrink-0 text-xs font-semibold">
-        <button data-tab="tab-dashboard" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-blue-500 text-blue-400 flex items-center justify-center gap-1.5 transition-colors">
+    <aside id="sidebar-section" class="hidden md:flex w-full md:w-[460px] lg:w-[520px] bg-slate-900 border-l border-slate-800 flex-col h-full z-10 shrink-0 shadow-2xl">
+      <!-- RETURN TO MAP & TITLE BAR (Visible on mobile and desktop/desktop-site) -->
+      <div class="flex items-center justify-between px-3 py-2 bg-slate-950 border-b border-slate-800 text-xs shrink-0 sticky top-0 z-20">
+        <button id="btn-back-to-map" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer">
+          <i class="fa-solid fa-arrow-left"></i> <span>Back to Map</span>
+        </button>
+        <span id="mobile-sidebar-title" class="font-bold text-slate-300 flex items-center gap-1.5 truncate">
+          Authority Hub
+        </span>
+      </div>
+
+      <!-- NAVIGATION TABS (Desktop only - mobile bottom bar switches tabs cleanly!) -->
+      <nav class="hidden md:flex border-b border-slate-800 bg-slate-900/80 shrink-0 text-xs font-semibold">
+        <button data-tab="tab-dashboard" class="tab-btn flex-1 py-2.5 sm:py-3 px-2 text-center border-b-2 border-blue-500 text-blue-400 flex items-center justify-center gap-1.5 transition-colors">
           <i class="fa-solid fa-chart-line"></i>
           <span>Authority Hub</span>
         </button>
-        <button data-tab="tab-assistant" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
+        <button data-tab="tab-assistant" class="tab-btn flex-1 py-2.5 sm:py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
           <i class="fa-solid fa-robot"></i>
           <span>Citizen Bot</span>
         </button>
-        <button data-tab="tab-report" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
+        <button data-tab="tab-report" class="tab-btn flex-1 py-2.5 sm:py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
           <i class="fa-solid fa-bullhorn"></i>
           <span>Report Intake</span>
         </button>
-        <button data-tab="tab-diagnostics" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
+        <button data-tab="tab-diagnostics" class="tab-btn flex-1 py-2.5 sm:py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-colors">
           <i class="fa-solid fa-microchip"></i>
           <span>ML Diagnostics</span>
         </button>
@@ -495,7 +550,7 @@
               The naive baseline relies solely on rain thresholds (e.g. >75mm rain = impassable). FloodLens combines <strong>terrain elevation (DEM), GloFAS river discharge backflow, and road structural class</strong> to eliminate false negatives in low-lying sumps and false alarms on elevated expressways.
             </p>
 
-            <div class="border border-slate-700 rounded-lg overflow-hidden text-xs">
+            <div class="border border-slate-700 rounded-lg overflow-x-auto text-xs custom-scrollbar">
               <table class="w-full text-left">
                 <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
                   <tr>
@@ -523,11 +578,35 @@
 
   </main>
 
+  <!-- BOTTOM MOBILE NAVIGATION BAR (Shown only on phone screens) -->
+  <nav id="mobile-bottom-nav" class="flex md:hidden bg-slate-900/95 border-t border-slate-800 px-2 py-1.5 z-40 shrink-0 justify-around items-center safe-bottom backdrop-blur-md">
+    <button data-mobile-view="map" class="mobile-nav-btn flex flex-col items-center justify-center text-blue-400 py-1 px-3 rounded-lg transition-colors">
+      <i class="fa-solid fa-map text-base"></i>
+      <span class="text-[10px] font-semibold mt-0.5">Map</span>
+    </button>
+    <button data-mobile-view="tab-dashboard" class="mobile-nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 px-3 rounded-lg transition-colors">
+      <i class="fa-solid fa-chart-line text-base"></i>
+      <span class="text-[10px] font-semibold mt-0.5">Hub</span>
+    </button>
+    <button data-mobile-view="tab-assistant" class="mobile-nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 px-3 rounded-lg transition-colors">
+      <i class="fa-solid fa-robot text-base"></i>
+      <span class="text-[10px] font-semibold mt-0.5">Bot</span>
+    </button>
+    <button data-mobile-view="tab-report" class="mobile-nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 px-3 rounded-lg transition-colors">
+      <i class="fa-solid fa-camera text-base"></i>
+      <span class="text-[10px] font-semibold mt-0.5">Report</span>
+    </button>
+    <button data-mobile-view="tab-diagnostics" class="mobile-nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 px-3 rounded-lg transition-colors">
+      <i class="fa-solid fa-microchip text-base"></i>
+      <span class="text-[10px] font-semibold mt-0.5">ML</span>
+    </button>
+  </nav>
+
   <!-- SCRIPTS -->
-  <script src="/static/js/api.js"></script>
-  <script src="/static/js/map.js"></script>
-  <script src="/static/js/dashboard.js"></script>
-  <script src="/static/js/assistant.js"></script>
-  <script src="/static/js/app.js"></script>
+  <script src="/static/js/api.js?v=2.4"></script>
+  <script src="/static/js/map.js?v=2.4"></script>
+  <script src="/static/js/dashboard.js?v=2.4"></script>
+  <script src="/static/js/assistant.js?v=2.4"></script>
+  <script src="/static/js/app.js?v=2.4"></script>
 </body>
 </html>
