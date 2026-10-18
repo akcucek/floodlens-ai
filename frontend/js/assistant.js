@@ -51,11 +51,26 @@ class CitizenAssistantUI {
 
       if (res.suggested_path && res.suggested_path.length > 0) {
         this.map.showRoutePath(res.suggested_path);
+        this.appendRouteButton();
       }
     } catch (err) {
       this.removeTypingIndicator(typingId);
       this.appendMessage('assistant', `⚠️ Sorry, could not process request: ${err.message}`);
     }
+  }
+
+  appendRouteButton() {
+    if (!this.chatContainer) return;
+    const btnDiv = document.createElement('div');
+    btnDiv.className = 'flex justify-start pl-9';
+    btnDiv.innerHTML = `
+      <button onclick="window.switchToMapView && window.switchToMapView()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 transition active:scale-95">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span>Show Route on Map</span>
+      </button>
+    `;
+    this.chatContainer.appendChild(btnDiv);
+    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
   }
 
   appendMessage(role, text, disclaimer = null) {

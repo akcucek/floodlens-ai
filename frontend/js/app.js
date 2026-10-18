@@ -60,7 +60,240 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // 4. Layer & Basemap Handlers
+  // 4. Map Intelligence Layers Box Open / Close Logic
+  const mapLayersBox = document.getElementById('map-layers-box');
+  const btnCloseMapLayers = document.getElementById('btn-close-map-layers');
+  const btnOpenMapLayers = document.getElementById('btn-open-map-layers');
+
+  function setLayersBoxOpen(isOpen) {
+    if (!mapLayersBox || !btnOpenMapLayers) return;
+    if (isOpen) {
+      mapLayersBox.classList.remove('hidden');
+      mapLayersBox.style.display = 'block';
+      btnOpenMapLayers.classList.add('hidden');
+      btnOpenMapLayers.style.display = 'none';
+    } else {
+      mapLayersBox.classList.add('hidden');
+      mapLayersBox.classList.remove('block', 'md:block');
+      mapLayersBox.style.display = 'none';
+      btnOpenMapLayers.classList.remove('hidden', 'md:hidden');
+      btnOpenMapLayers.classList.add('flex');
+      btnOpenMapLayers.style.display = 'inline-flex';
+    }
+  }
+
+  if (btnCloseMapLayers) {
+    btnCloseMapLayers.addEventListener('click', () => setLayersBoxOpen(false));
+  }
+  if (btnOpenMapLayers) {
+    btnOpenMapLayers.addEventListener('click', () => setLayersBoxOpen(true));
+  }
+
+  // On phone screens (< 768px), default to closed so the map is unobstructed
+  if (window.innerWidth < 768) {
+    setLayersBoxOpen(false);
+  } else {
+    setLayersBoxOpen(true);
+  }
+
+  // 5. Universal Navigation & View Switcher Logic
+  const mapSection = document.getElementById('map-section');
+  const sidebarSection = document.getElementById('sidebar-section');
+  const mobileNavBtns = document.querySelectorAll('.mobile-nav-btn');
+  const btnBackToMap = document.getElementById('btn-back-to-map');
+  const btnFloatingViewHub = document.getElementById('btn-floating-view-hub');
+  const hdrBtnMap = document.getElementById('hdr-btn-map');
+  const hdrBtnHub = document.getElementById('hdr-btn-hub');
+
+  const mobileSidebarTitle = document.getElementById('mobile-sidebar-title');
+  const viewTitles = {
+    'tab-dashboard': 'Authority Hub',
+    'tab-assistant': 'Citizen Safe-Access Bot',
+    'tab-report': 'Submit Ground Report',
+    'tab-diagnostics': 'ML Failure Diagnostics'
+  };
+
+  function switchView(viewName) {
+    const isMobile = window.innerWidth < 768;
+
+    // Update Header Fast View Switcher Buttons
+    if (hdrBtnMap && hdrBtnHub) {
+      if (viewName === 'map') {
+        hdrBtnMap.classList.add('bg-blue-600', 'text-white');
+        hdrBtnMap.classList.remove('text-slate-400');
+        hdrBtnHub.classList.remove('bg-blue-600', 'text-white');
+        hdrBtnHub.classList.add('text-slate-400');
+      } else {
+        hdrBtnHub.classList.add('bg-blue-600', 'text-white');
+        hdrBtnHub.classList.remove('text-slate-400');
+        hdrBtnMap.classList.remove('bg-blue-600', 'text-white');
+        hdrBtnMap.classList.add('text-slate-400');
+      }
+    }
+
+    // Update Mobile Bottom Nav Pills
+    mobileNavBtns.forEach(btn => {
+      const bView = btn.getAttribute('data-mobile-view');
+      if (bView === viewName) {
+        btn.classList.add('text-blue-400');
+        btn.classList.remove('text-slate-400');
+      } else {
+        btn.classList.remove('text-blue-400');
+        btn.classList.add('text-slate-400');
+      }
+    });
+
+    if (viewName === 'map') {
+      if (mapSection) {
+        mapSection.classList.remove('hidden');
+        mapSection.classList.add('flex');
+        // Scroll map into view (crucial for desktop site mode on mobile)
+        mapSection.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
+      }
+      if (isMobile && sidebarSection) {
+        sidebarSection.classList.add('hidden');
+        sidebarSection.classList.remove('flex');
+      }
+      if (btnFloatingViewHub) {
+        btnFloatingViewHub.classList.remove('hidden');
+      }
+      setTimeout(() => {
+        if (mapManager && mapManager.map) mapManager.map.invalidateSize();
+      }, 80);
+    } else {
+      // Switching to a Sidebar Tab (Hub, Bot, Report, ML)
+      if (btnFloatingViewHub) {
+        btnFloatingViewHub.classList.add('hidden');
+      }
+
+      if (isMobile && mapSection) {
+        mapSection.classList.add('hidden');
+        mapSection.classList.remove('flex');
+      }
+
+      if (sidebarSection) {
+        sidebarSection.classList.remove('hidden');
+        sidebarSection.classList.add('flex', 'w-full');
+        // Scroll sidebar into view (allows seamless navigation even when zoomed in desktop site!)
+        sidebarSection.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
+      }
+
+      if (mobileSidebarTitle && viewTitles[viewName]) {
+        mobileSidebarTitle.textContent = viewTitles[viewName];
+      }
+
+      // Activate corresponding tab button & tab content in sidebar
+      tabBtns.forEach(b => {
+        const tId = b.getAttribute('data-tab');
+        if (tId === viewName) {
+          b.classList.add('border-blue-500', 'text-blue-400');
+          b.classList.remove('border-transparent', 'text-slate-400');
+        } else {
+          b.classList.remove('border-blue-500', 'text-blue-400');
+          b.classList.add('border-transparent', 'text-slate-400');
+        }
+      });
+
+      tabContents.forEach(c => {
+        if (c.id === viewName) {
+          c.classList.remove('hidden');
+        } else {
+          c.classList.add('hidden');
+        }
+      });
+    }
+  }
+
+  // Hook all interactive view-switching triggers
+  mobileNavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetView = btn.getAttribute('data-mobile-view');
+      switchView(targetView);
+    });
+  });
+
+  if (btnBackToMap) {
+    btnBackToMap.addEventListener('click', () => switchView('map'));
+  }
+  if (btnFloatingViewHub) {
+    btnFloatingViewHub.addEventListener('click', () => switchView('tab-dashboard'));
+  }
+  if (hdrBtnMap) {
+    hdrBtnMap.addEventListener('click', () => switchView('map'));
+  }
+  if (hdrBtnHub) {
+    hdrBtnHub.addEventListener('click', () => switchView('tab-dashboard'));
+  }
+
+  // Global helpers
+  window.switchToMapView = function() {
+    switchView('map');
+  };
+  window.switchMobileView = switchView;
+
+  // Mobile Fast Controls: District Picker & Telemetry Toggle
+  const btnMobileDistrictPicker = document.getElementById('btn-mobile-district-picker');
+  const btnToggleTelemetry = document.getElementById('btn-toggle-telemetry');
+  const mobileControlsDrawer = document.getElementById('mobile-controls-drawer');
+
+  if (btnMobileDistrictPicker && allIndiaModal) {
+    btnMobileDistrictPicker.addEventListener('click', () => {
+      renderModalGrid(allDistricts);
+      allIndiaModal.classList.remove('hidden');
+    });
+  }
+
+  if (btnToggleTelemetry && mobileControlsDrawer) {
+    btnToggleTelemetry.addEventListener('click', () => {
+      mobileControlsDrawer.classList.toggle('hidden');
+      mobileControlsDrawer.classList.toggle('flex');
+      btnToggleTelemetry.classList.toggle('bg-blue-600');
+      btnToggleTelemetry.classList.toggle('text-white');
+    });
+  }
+
+  // Mobile Header Buttons (All India, API Key, Refresh)
+  const btnAllIndiaMobile = document.getElementById('btn-all-india-modal-mobile');
+  const btnApiKeyMobile = document.getElementById('btn-api-key-modal-mobile');
+  const refreshBtnMobile = document.getElementById('refresh-btn-mobile');
+
+  if (btnAllIndiaMobile && allIndiaModal) {
+    btnAllIndiaMobile.addEventListener('click', () => {
+      renderModalGrid(allDistricts);
+      allIndiaModal.classList.remove('hidden');
+    });
+  }
+  if (btnApiKeyMobile) {
+    btnApiKeyMobile.addEventListener('click', () => {
+      const apiKeyModal = document.getElementById('api-key-modal');
+      if (apiKeyModal) apiKeyModal.classList.remove('hidden');
+    });
+  }
+  if (refreshBtnMobile && refreshBtn) {
+    refreshBtnMobile.addEventListener('click', () => refreshBtn.click());
+  }
+
+  // Initialize mobile view
+  if (window.innerWidth < 768) {
+    switchMobileView('map');
+  }
+
+  // Handle window resize between mobile and desktop gracefully
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 768) {
+      if (mapSection) {
+        mapSection.classList.remove('hidden');
+        mapSection.classList.add('flex');
+      }
+      if (sidebarSection) {
+        sidebarSection.classList.remove('hidden', 'w-full');
+        sidebarSection.classList.add('flex');
+      }
+      if (mapManager && mapManager.map) mapManager.map.invalidateSize();
+    }
+  });
+
+  // 6. Layer & Basemap Handlers
   if (layerRoads) layerRoads.addEventListener('change', e => mapManager.toggleLayer('roads', e.target.checked));
   if (layerHospitals) layerHospitals.addEventListener('change', e => mapManager.toggleLayer('hospitals', e.target.checked));
   if (layerCommunities) layerCommunities.addEventListener('change', e => mapManager.toggleLayer('communities', e.target.checked));
@@ -312,6 +545,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const data = await API.fetchFloodIntelligence(district, scenario);
       
+      // Update mobile district name button
+      if (data && data.district) {
+        const mobDistName = document.getElementById('mobile-district-name');
+        if (mobDistName) {
+          const shortName = (data.district.name || '').split(',')[0].replace(/\(.*\)/, '').trim();
+          mobDistName.textContent = shortName;
+        }
+      }
+
       // Update GIS map
       mapManager.renderData(data);
 
