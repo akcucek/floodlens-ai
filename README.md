@@ -14,8 +14,7 @@ The project includes a FastAPI backend, a front-end dashboard, and modular data 
 
 Overall, FloodLens AI acts as a decision-support system for flood preparedness and emergency management, helping users understand risk, identify vulnerable areas, prioritize response actions, and communicate safe-access guidance effectively in critical situations.
 
-![Uploading image.png…]()
-
+<img width="2842" height="1728" alt="image" src="https://github.com/user-attachments/assets/49c4eb41-741c-4c62-baf3-e9c90819b45b" />
 
 ## Key capabilities
 
