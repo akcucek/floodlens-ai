@@ -2,6 +2,8 @@
 
 FloodLens AI is a flood-monitoring and disaster-response intelligence platform designed to support local authorities, emergency teams, and public responders during monsoon and flood emergencies. The system integrates live environmental data, district-level flood risk information, geospatial infrastructure analysis, and AI-assisted decision support to improve situational awareness and response planning.
 
+https://floodlens-854681872487.us-central1.run.app/
+
 ## Overview
 
 The platform analyzes weather conditions, river discharge, gauge levels, and flood alerts to assess the current risk state of selected districts. It also evaluates road network vulnerability, identifying roads likely to fail or become unusable during heavy rainfall or rising water levels. By combining this with network-based isolation analysis, the system can highlight communities that may become disconnected from hospitals, shelters, or safe routes during flooding events.
